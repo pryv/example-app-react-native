@@ -3,36 +3,42 @@ React native compatible extension for the Pryv.io JavaScript library
 
 ## Getting started
 
-If you have no local react-native environment setup the quickest way 
-to get up and running is to use one of the prepared docker containers.
-For example to run this application with [react-native-docker docker image](https://github.com/theanam/react-native-docker) 
-is as easy as starting the docker image
-```
+If you have no local react-native environment setup, the quickest way to get up and running is to use a prepared docker containers.
+
+For example to run this application with the [react-native-docker image](https://github.com/theanam/react-native-docker):
+
+```bash
 docker run --rm -it -v `pwd`:/app --network host theanam/react-native bash
 ```
-Building the project (in /app/PryvReactNative directory inside the container)
+
+Build the project (in the `/app/PryvReactNative` directory inside the container):
+
+```bash
+yarn web (in the `/app/PryvReactNative` directory)
 ```
-yarn web (in /app/PryvReactNative directory)
-```
-Solving the CORS issue (in /app/PryvReactNative directory inside the container). localhost:<port> parameter
-represents the port that you will see after launching `yarn web`. This step will proxy
-`localhost:<port>` to `https://l.rec.la:4443/` so you can open now `https://l.rec.la:4443/`
-in your browser.
-```
+
+To solve the CORS issue (in the `/app/PryvReactNative` directory inside the container), run the following to proxy
+`localhost:<port>` to `https://l.rec.la:4443/` so you can open now `https://l.rec.la:4443/` in your browser. The `localhost:<port>` parameter
+represents the port that you will see after launching `yarn web`.
+
+```bash
 ./node_modules/rec-la/bin/proxy.js localhost:<port>
 ```
 
 ## Description
 
 The application is based on [create-react-native-app](https://github.com/expo/create-react-native-app). 
-You can check the `./LibJsReactNative/App.js` for the Pryv authentication related code. All you need
-to do (the same as in lib-js library description) are these 3 things:
+You can check [`./PryvReactNative/App.js`](/PryvReactNative/App.js) for the Pryv authentication related code. As explained in the [lib-js README](https://github.com/pryv/lib-js), you need to do the following:
+
 1. Import pryv lib-js library
-      ```
+
+      ```javascript
       import { Pryv } from 'pryv';
       ```
+
 2. Execute Pryv.Browser.setupAuth with correct settings and `state` change listener
-      ```
+
+      ```javascript
       // called each time the authentication state changed
       function pryvAuthStateChange (state) {
         console.log('##pryvAuthStateChange', state);
@@ -69,8 +75,10 @@ to do (the same as in lib-js library description) are these 3 things:
         false
       );
       ```
+
 3. Update the screen depending on the state
-      ```
+
+      ```javascript
       let screen;
       if (authState.id === Pryv.Browser.AuthStates.LOADING) {
         screen = <Text>Loading screen</Text>;
