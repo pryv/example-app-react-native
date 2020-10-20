@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pryv } from 'pryv';
+
 import Login from './views/auth/login';
 import Logout from './views/auth/logout';
 import Error from './views/error';
@@ -9,6 +10,7 @@ import Dashboard from './views/dashboard';
 export default function App () {
   const [authState, setAuthState] = useState('');
   const [connection, setConnection] = useState(null);
+  const [pryvService, setPryvService] = useState(null);
 
   // called each time the authentication state changed
   function pryvAuthStateChange (state) {
@@ -29,10 +31,7 @@ export default function App () {
   
   if (authState === '') {
     (async function () {
-      //let serviceInfoUrl = 'https://api.pryv.com/lib-js/demos/service-info.json';
-      let serviceInfoUrl = './lib-js/web-demos/service-info.json';
       const authSettings = {
-        spanButtonID: 'pryv-button', // span id the DOM that will be replaced by the Service specific button
         onStateChange: pryvAuthStateChange, // event Listener for Authentication steps
         authRequest: { // See: https://api.pryv.com/reference/#auth-request
           requestingAppId: 'lib-js-test',
@@ -52,22 +51,37 @@ export default function App () {
           // referer: 'my test with lib-js', // optional string to track registration source
         }
       };
-      let pryvService = await Pryv.Browser.setupAuth(
-        authSettings,
-        serviceInfoUrl,
-        null,
-        false
-      );
-      console.log(pryvService, 'pryvService');
+      try{
+        setPryvService(await Pryv.Browser.setupAuth(
+          authSettings,
+          null,
+          {
+            "register": "https://reg.pryv.me",
+            "access": "https://access.pryv.me/access",
+            "api": "https://{username}.pryv.me/",
+            "name": "Pryv Lab",
+            "home": "https://www.pryv.com",
+            "support": "https://pryv.com/helpdesk",
+            "terms": "https://pryv.com/pryv-lab-terms-of-use/",
+            "eventTypes": "https://api.pryv.com/event-types/flat.json",
+            "assets": {
+              "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
+            }
+          },
+          false
+        ));
+      } catch (e) {
+        console.log('Error:', e);
+      }
     })();
   }
 
-  
+  // Screens for the app login
   let screen;
   if (authState.id === Pryv.Browser.AuthStates.LOADING) {
     screen = <Text>Loading screen</Text>;
   } else if (authState.id === Pryv.Browser.AuthStates.INITIALIZED) {
-    screen = <Login />;
+    screen = <Login pryvService={pryvService} />;
   } else if (authState.id === Pryv.Browser.AuthStates.AUTHORIZED) {
     screen = <Dashboard />;
   } else if (authState.id === Pryv.Browser.AuthStates.LOGOUT) {
@@ -82,6 +96,7 @@ export default function App () {
         Welcome to the Hello World Pryv app for the react-native
       </Text>
       <Text>You can replace screens with you authentication logic</Text>
+      <Text>Screen:</Text>
       {screen}
     </View>
   );

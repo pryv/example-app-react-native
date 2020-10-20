@@ -2,6 +2,7 @@
 React native compatible extension for the Pryv.io JavaScript library
 
 ## Getting started
+
 If you have no local react-native environment setup the quickest way 
 to get up and running is to use one of the prepared docker containers.
 For example to run this application with [react-native-docker docker image](https://github.com/theanam/react-native-docker) 
@@ -9,9 +10,14 @@ is as easy as starting the docker image
 ```
 docker run --rm -it -v `pwd`:/app --network host theanam/react-native bash
 ```
-And building the project
+Building the project (in /app/PryvReactNative directory inside the container)
 ```
 yarn web (in /app/PryvReactNative directory)
+```
+Solving the CORS issue (in /app/PryvReactNative directory inside the container). localhost:<port> parameter
+represents the port that you will see after launching `yarn web`.
+```
+./node_modules/rec-la/bin/proxy.js localhost:<port>
 ```
 
 ## Description
@@ -88,6 +94,6 @@ to do (the same as in lib-js library description) are these 3 things:
 
 ### Enjoy!
 
-##License
+## License
 
 [Revised BSD license](https://github.com/pryv/documents/blob/master/license-bsd-revised.md)
