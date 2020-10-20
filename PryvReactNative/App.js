@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Pryv } from 'pryv';
+import Pryv from 'pryv';
 
 import Login from './views/auth/login';
 import Logout from './views/auth/logout';
@@ -18,17 +18,8 @@ export default function App () {
     if (state !== authState) {
       setAuthState(state);
     }
-
-    if (state.id === Pryv.Browser.AuthStates.AUTHORIZED) {
-      setConnection(Pryv.Connection(state.apiEndpoint));
-      console.log('# Browser succeeded for user ' + connection.apiEndpoint);
-    }
-    if (state.id === Pryv.Browser.AuthStates.LOGOUT) {
-      setConnection(null);
-      console.log('# Logout');
-    }
   }
-  
+
   if (authState === '') {
     (async function () {
       const authSettings = {
@@ -51,11 +42,9 @@ export default function App () {
           // referer: 'my test with lib-js', // optional string to track registration source
         }
       };
-      try{
-        setPryvService(await Pryv.Browser.setupAuth(
-          authSettings,
-          null,
-          {
+      // To avoid CORS problem in local environment we use json and not the url
+      let serviceInfoUrl = null; // 'https://api.pryv.com/lib-js/demos/service-info.json';
+      let serviceInfoJson = {
             "register": "https://reg.pryv.me",
             "access": "https://access.pryv.me/access",
             "api": "https://{username}.pryv.me/",
@@ -66,10 +55,9 @@ export default function App () {
             "eventTypes": "https://api.pryv.com/event-types/flat.json",
             "assets": {
               "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
-            }
-          },
-          false
-        ));
+            }};
+      try {
+        setPryvService(await Pryv.Browser.setupAuth(authSettings, serviceInfoUrl, serviceInfoJson, false));
       } catch (e) {
         console.log('Error:', e);
       }

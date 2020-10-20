@@ -15,7 +15,9 @@ Building the project (in /app/PryvReactNative directory inside the container)
 yarn web (in /app/PryvReactNative directory)
 ```
 Solving the CORS issue (in /app/PryvReactNative directory inside the container). localhost:<port> parameter
-represents the port that you will see after launching `yarn web`.
+represents the port that you will see after launching `yarn web`. This step will proxy
+`localhost:<port>` to `https://l.rec.la:4443/` so you can open now `https://l.rec.la:4443/`
+in your browser.
 ```
 ./node_modules/rec-la/bin/proxy.js localhost:<port>
 ```
@@ -32,22 +34,13 @@ to do (the same as in lib-js library description) are these 3 things:
 2. Execute Pryv.Browser.setupAuth with correct settings and `state` change listener
       ```
       // called each time the authentication state changed
-      function pryvAuthStateChange (state) { 
+      function pryvAuthStateChange (state) {
         console.log('##pryvAuthStateChange', state);
         if (state !== authState) {
           setAuthState(state);
         }
-        
-        if (state.id === Pryv.Browser.AuthStates.AUTHORIZED) {
-          setConnection(Pryv.Connection(state.apiEndpoint));
-          console.log('# Browser succeeded for user ' + connection.apiEndpoint);
-        }
-        if (state.id === Pryv.Browser.AuthStates.LOGOUT) {
-          setConnection(null);
-          console.log('# Logout');
-        }
       }
-      let serviceInfoUrl = 'https://api.pryv.com/lib-js/demos/service-info.json';
+      
       const authSettings = {
         spanButtonID: 'pryv-button', // span id the DOM that will be replaced by the Service specific button
         onStateChange: pryvAuthStateChange, // event Listener for Authentication steps
