@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Text, Button } from 'react-native';
+import { Text, Button, View } from 'react-native';
 
-export default ({ pryvService }) => {
+export default ({ navigation }) => {
   const [authState, setAuthState] = useState('Before login');
   const username = 'jslibtest5';
   const password = username;
@@ -39,12 +39,12 @@ export default ({ pryvService }) => {
   */
 
   return (
-    <div>
+    <View>
       <Text>Login screen</Text>
       <Button
         onPress={ simulatePersonalLogin }
         title={`Simulate log in - State: ${authState}`}
         />
-    </div>
+    </View>
   );
 };
