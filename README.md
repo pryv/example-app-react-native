@@ -3,22 +3,23 @@ React native compatible extension for the Pryv.io JavaScript library
 
 ## Getting started
 
+
 If you have no local react-native environment setup the quickest way 
-to get up and running is to use one of the prepared docker containers.
-For example to run this application with [react-native-docker docker image](https://github.com/theanam/react-native-docker) 
-is as easy as 
+to get up and running is to use a prepared docker containers.
+For example to run this application with the [react-native-docker image](https://github.com/theanam/react-native-docker):
 
 1. starting the docker image
-```
+```bash
 docker run --rm -it -v `pwd`:/app --network host theanam/react-native bash
 ```
 
 2. Downloading [expo app](https://expo.io/tools#client) for easier testing (you can choose your different setup)
 
-3. Building the project (in /app/PryvReactNative directory inside the container)
-```
+3. Build the project (in the `/app/PryvReactNative` directory inside the container):
+```bash
 expo start (in /app/PryvReactNative directory)
 ```
+
 4. In the expo app, you can scan the qr code to run the app (the mobile has to be on the
 same network as the computer)
 
@@ -26,14 +27,18 @@ same network as the computer)
 ## Description
 
 The application is based on [create-react-native-app](https://github.com/expo/create-react-native-app). 
-You can check the `./LibJsReactNative/views/auth/login-method-selection.js` for the Pryv authentication related code. All you need
-to do (the same as in lib-js library description) are these 3 things:
+<<<<<<< HEAD
+You can check [./PryvReactNative/views/auth/login-method-selection.js](/PryvReactNative/views/auth/login-method-selection.js) for the Pryv authentication related code. As explained in the [lib-js README](https://github.com/pryv/lib-js), you need to do the following:
+
 1. Import pryv lib-js library
-      ```
+
+      ```javascript
       import { Pryv } from 'pryv';
       ```
+
 2. Execute Pryv.Browser.setupAuth with correct settings and `state` change listener
-      ```
+
+      ```javascript
       // called each time the authentication state changed
       function pryvAuthStateChange (state) {
         console.log('##pryvAuthStateChange', state);
@@ -89,8 +94,10 @@ to do (the same as in lib-js library description) are these 3 things:
         console.log('Error:', e);
       }
       ```
+
 3. Update the screen depending on the state
-      ```
+
+    ```javascript
       if (authState.id == Pryv.Browser.AuthStates.AUTHORIZED) { 
         // redirect to the dashboard 
       }
