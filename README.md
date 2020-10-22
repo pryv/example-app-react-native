@@ -21,19 +21,19 @@ To run this application with the [react-native-docker image](https://github.com/
 docker run --rm -it -v `pwd`:/app --network host theanam/react-native bash
 ```
 
-3. Install dependencies, run (in the `/app/PryvReactNative` directory inside the container):
+2. Install dependencies, run (in the `/app/PryvReactNative` directory inside the container):
 
 ```bash
 yarn
 ```
 
-4. Build the project, run (in the `/app/PryvReactNative` directory inside the container):
+3. Build the project, run (in the `/app/PryvReactNative` directory inside the container):
 
 ```bash
 expo start (in /app/PryvReactNative directory)
 ```
 
-2. Download the [expo app](https://expo.io/tools#client) on your mobile device
+4. Download the [expo app](https://expo.io/tools#client) on your mobile device
 
 5. Using the expo app, you can scan the QR code to run the app (the mobile device has to be on the same network as the computer)
 
