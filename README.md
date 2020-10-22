@@ -103,14 +103,30 @@ You can check [./PryvReactNative/views/auth/login-method-selection.js](/PryvReac
       }
       ```
 
-3. Update the screen depending on the state
+3. When user clicks on login button, the application should start the auth process and redirect to the 
+url that is received from auth request as in the example below:
 
     ```javascript
-    if (authState.id == Pryv.Browser.AuthStates.AUTHORIZED) { 
-      // redirect to the dashboard 
+      async function startAuthProcess () {
+        await pryvService.startAuthRequest();
+        const loginUrl = pryvService.getAccessData().authUrl;
+        // open webview with loginUrl url
+      }
+    ```
+   [startAuthProcess in react-native example](https://github.com/pryv/lib-js-react-native/blob/dbb45f9192661b198e6b5b86a1c20e387a3a9c7e/PryvReactNative/views/auth/login-method-selection.js#L169)
+4. In case of the error or when user don't finish login process, the application should stop the auth process:
+    ```javascript
+    await pryvService.stopAuthProcess();
+    ```
+   
+5. When state id is equal to `Pryv.Browser.AuthStates.AUTHORIZED`, you can get api_endpoint with the token from the `state` as shown below:
+    ```javascript
+    if (authState.id == Pryv.Browser.AuthStates.AUTHORIZED) {
+      const { endpoint, token } = pryvService.extractTokenAndApiEndpoint(authState.apiEndpoint);
+      // username = authState.displayName
     }
     ```
-
+   
 ### Personal login
 
 As showed in the [./PryvReactNative/views/auth/login.js](/PryvReactNative/views/auth/login.js), for the personal login you can use 
