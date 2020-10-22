@@ -43,7 +43,8 @@ You can check [./PryvReactNative/views/auth/login-method-selection.js](/PryvReac
 import { Pryv } from 'pryv';
 ```
 
-2. Execute `Pryv.Browser.setupAuth()` with correct settings and `state` change listener:
+2. Execute `Pryv.Browser.setupAuth()` with correct settings and `state` change listener (it is important that authSettings would NOT have `spanButtonID` setting,
+ otherwise, default Pryv login button would be rendered):
 
 ```javascript
 // called each time the authentication state changed
@@ -89,13 +90,11 @@ let serviceInfoJson = {
     "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
   }
 };
-const customView = false;
 try {
   let pryvService = await Pryv.Browser.setupAuth(
     authSettings,
     serviceInfoUrl,
-    serviceInfoJson,
-    customView
+    serviceInfoJson
   );
 } catch (e) {
   console.log('Error:', e);

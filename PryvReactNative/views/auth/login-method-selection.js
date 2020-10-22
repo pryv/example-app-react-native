@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 const styles = require('../styles');
 import { Text, Button, View, Alert } from 'react-native';
 
-const Pryv = require('../../lib-js/src/index.js');
+const Pryv = require('pryv');
 import * as SecureStore from 'expo-secure-store';
 
 export default ({ navigation, route }) => {
@@ -149,13 +149,11 @@ export default ({ navigation, route }) => {
         "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
       }
     };
-    const customView = false;
     try {
       let pryvServiceObj = await Pryv.Browser.setupAuth(
         authSettings,
         serviceInfoUrl,
-        serviceInfoJson,
-        customView
+        serviceInfoJson
       );
       setPryvService(pryvServiceObj);
     } catch (e) {
