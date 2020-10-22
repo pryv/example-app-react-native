@@ -15,27 +15,27 @@ This applications displays 2 implementations of the Pryv.io authentication proce
 If you have no local react-native environment setup, the quickest way to get up and running is to use a prepared docker container.  
 To run this application with the [react-native-docker image](https://github.com/theanam/react-native-docker):
 
-1. start the docker image
+1. start the docker image:
 
 ```bash
 docker run --rm -it -v `pwd`:/app --network host theanam/react-native bash
 ```
 
-2. Download [expo app](https://expo.io/tools#client) for easier testing
-
-3. Install dependencies
+3. Install dependencies, run (in the `/app/PryvReactNative` directory inside the container):
 
 ```bash
-yarn (in /app/PryvReactNative directory)
+yarn
 ```
 
-4. Build the project (in the `/app/PryvReactNative` directory inside the container):
+4. Build the project, run (in the `/app/PryvReactNative` directory inside the container):
 
 ```bash
 expo start (in /app/PryvReactNative directory)
 ```
 
-5. In the expo app, you can scan the QR code to run the app (the mobile device has to be on the same network as the computer)
+2. Download the [expo app](https://expo.io/tools#client) on your mobile device
+
+5. Using the expo app, you can scan the QR code to run the app (the mobile device has to be on the same network as the computer)
 
 ## Description
 
