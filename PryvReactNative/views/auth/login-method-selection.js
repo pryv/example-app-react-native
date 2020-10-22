@@ -20,9 +20,11 @@ export default ({ navigation, route }) => {
     setAuthState('');
     checkAuth();
     action = null;
-  }
-
-  if (loggedIn === false && authState === '') {
+  } else if ((loggedIn === false && authState?.id === Pryv.Browser.AUTHORIZED) || authState === '') {
+    // set initial auth state so that this method would not be called each time on rerendering
+    setAuthState({
+      id: 'STARTED_AUTH'
+    });
     checkAuth();
   }
 
@@ -56,7 +58,7 @@ export default ({ navigation, route }) => {
       setEndpoint(endpoint);
       setUsername(username);
     } else if (authState.id == Pryv.Browser.AuthStates.ERROR) {
-      console.log('Error', authState.error, pryvService.getErrorMessage());
+      console.log('Error', authState.error);
       navigation.navigate('NotLoggedIn');
       Alert.alert(
         "Error",
@@ -78,15 +80,12 @@ export default ({ navigation, route }) => {
    */
   async function setUserInfo (userConnection) {
     if (userConnection != null) {
-      console.log(
-        'Started user connection ',
-        userConnection
-      );
+      console.log('Started user connection');
       setLoggedIn(true);
       setConnection(userConnection);
       const connectionUsername = await userConnection.username();
       setUsername(connectionUsername);
-      setUsername(userConnection.endpoint);
+      setEndpoint(userConnection.endpoint);
       navigation.navigate('Dashboard', {
         username: connectionUsername,
         endpoint: userConnection.endpoint

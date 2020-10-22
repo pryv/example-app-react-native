@@ -12,7 +12,6 @@ export default ({ navigation }) => {
     try {
       const connection = await pryvService.login(username, password, appId);
       const token = connection.token; // you should save the token for the later use
-      console.log(token, 'token');
       setAuthState('Logged in');
     } catch (error) {
       console.log(error, 'error');
