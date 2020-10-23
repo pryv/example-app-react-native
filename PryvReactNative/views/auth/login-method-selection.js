@@ -1,96 +1,121 @@
-import React, { useEffect, useState } from 'react';
-const styles = require('../styles');
+import React, { useState } from 'react';
+import styles from '../styles';
 import { Text, Button, View, Alert } from 'react-native';
 
-const Pryv = require('pryv');
+const Pryv = require('../../lib-js/src/index.js');
 import * as SecureStore from 'expo-secure-store';
 
-export default ({ navigation, route }) => {
+const LoginMethodSelection = ({ navigation, route }) => {
   const params = route.params;
-  let action = (params?.action) ? params?.action: '';
+  let action = (params?.action) ? params?.action : '';
   const [authState, setAuthState] = useState('');
   const [pryvService, setPryvService] = useState(null);
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [endpoint, setEndpoint] = useState('');
-  const [connection, setConnection] = useState(null);
+  const [loginButton, setLoginButton] = useState(null);
 
-  if (action == 'logout' && loggedIn === true) {
+  class MyLoginButton extends Pryv.MobileApp.HumanInteractionInterface {
+
+    /**
+     * Optional
+     * Whatever needs to be done before the start of auth process
+     * async init () { }
+     */
+
+    /**
+     * The same button can redirect, open auth popup or logout
+     * this action should implement 
+     * this.auth.handleClick();
+     */
+    onClick () {
+      this.auth.handleClick();
+    }
+
+    /**
+     * Called each time when the state changes. 
+     * It will set state to local authState variable
+     * Or show error alert when the state is equal to the error
+     */
+    onStateChange () {
+      console.log('State just changed to:', this.auth.getState());
+      if (this.auth.getState() !== authState) {
+        setAuthState(this.auth.getState());
+        if (authState.id == Pryv.MobileApp.AuthStates.ERROR) {
+          console.log('Error', authState.error);
+          navigation.navigate('NotLoggedIn');
+          Alert.alert(
+            "Error",
+            pryvService.getErrorMessage(),
+            [
+              {
+                text: "Cancel",
+                style: "cancel"
+              },
+            ],
+            { cancelable: true }
+          );
+        }
+      }
+    }
+
+    startLoginScreen (loginUrl) {
+      console.log('My custom popup that is huge:');
+      return navigation.navigate('AppWebAuth3', {
+        url: loginUrl
+      });
+    }
+
+    saveAuthorizationData (authData) {
+      SecureStore.setItemAsync('auth_state', JSON.stringify(authData));
+      navigation.navigate('Dashboard', {
+        username: authData.displayName,
+        endpoint: authData.apiEndpoint
+      });
+      setEndpoint(authData.apiEndpoint);
+      setUsername(authData.displayName);
+    }
+
+    stopAuthRequest () {
+      this.auth.stopAuthRequest();
+    }
+
+    async getAuthorizationData () {
+      const authData = await SecureStore.getItemAsync('auth_data');
+      return JSON.parse(authData);
+    }
+
+    async deleteAuthorizationData () {
+      if (await SecureStore.isAvailableAsync('auth_data')) {
+        await SecureStore.deleteItemAsync('auth_data');
+      }
+    }
+  }
+
+  async function logout () {
     setLoggedIn(false);
     setAuthState('');
-    checkAuth();
+    console.log('uuu in logout');
+    await loginButton.deleteAuthorizationData();
+  }
+
+  if (action == 'logout' && loggedIn === true) {
+    console.log(action, 'aaaaaction', loggedIn, 'loggedIn');
+    logout();
     action = null;
-  } else if ((loggedIn === false && authState?.id === Pryv.Browser.AUTHORIZED) || authState === '') {
+  } else if (authState === '') {
     // set initial auth state so that this method would not be called each time on rerendering
     setAuthState({
       id: 'STARTED_AUTH'
     });
-    checkAuth();
-  }
-
-  /**
-   * Checks when Pryv library state is changed and set it 
-   * to local authState variable
-   * @param {*} state 
-   */
-  function pryvAuthStateChange (state) {
-    console.log('##pryvAuthStateChange', state);
-    if (state !== authState) {
-      setAuthState(state);
-    }
-  }
-
-  /**
-   * Each time when authState changes, refresh
-   * the screens accordingly. 
-   * a) if user is logged in, shows dashboard
-   * b) if user is logged out, shows this page with login buttons
-   * c) on Error, shows an alert
-   */ 
-  useEffect(() => {   
-    if (authState.id == Pryv.Browser.AuthStates.AUTHORIZED) {
-      const { endpoint, _ } = pryvService.extractTokenAndApiEndpoint(authState.apiEndpoint);
-      SecureStore.setItemAsync('api_endpoint', authState.apiEndpoint);
-      navigation.navigate('Dashboard', {
-        username: authState.displayName,
-        endpoint: endpoint
-      });
-      setEndpoint(endpoint);
-      setUsername(username);
-    } else if (authState.id == Pryv.Browser.AuthStates.ERROR) {
-      console.log('Error', authState.error);
-      navigation.navigate('NotLoggedIn');
-      Alert.alert(
-        "Error",
-        pryvService.getErrorMessage(),
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-        ],
-        { cancelable: true }
-      );
-    }
-  }, [authState]);
-    
-  /**
-   * Creates user connection and sets username and enpoint
-   * @param {*} userConnection 
-   */
-  async function setUserInfo (userConnection) {
-    if (userConnection != null) {
-      console.log('Started user connection');
-      setLoggedIn(true);
-      setConnection(userConnection);
-      const connectionUsername = await userConnection.username();
-      setUsername(connectionUsername);
-      setEndpoint(userConnection.endpoint);
-      navigation.navigate('Dashboard', {
-        username: connectionUsername,
-        endpoint: userConnection.endpoint
-      })
-    }
+    initializePryvService();
+  } else if ((loggedIn === false && authState?.id === Pryv.MobileApp.AUTHORIZED)
+    || authState === '') {
+    // set initial auth state so that this method would not be called each time on rerendering
+    setAuthState({
+      id: 'STARTED_AUTH'
+    });
+    autoLogin();
   }
 
   /**
@@ -98,24 +123,22 @@ export default ({ navigation, route }) => {
    * In other words, checks if there are user 
    * token and endpoint saved in secure storage
    */
-  async function checkAuth () {
-    const apiEndpoint = await SecureStore.getItemAsync('api_endpoint');
+  async function autoLogin () {
+    const apiEndpoint = await SecureStore.getItemAsync('auth_data');
     if (apiEndpoint != null) {
       const userConnection = new Pryv.Connection(apiEndpoint);
-      await setUserInfo(userConnection);
-    } else {
-      // Otherwise - crete service for not logged in user
-      initializePryvService();
+      setLoggedIn(true);
+      setEndpoint(userConnection.endpoint);
+      setUsername(await userConnection.username());
     }
   }
 
   /**
-   * For Not logged in users, Pryv.Browser.setupAuth method should be called.
+   * For Not logged in users, Pryv.MobileApp.setupAuth method should be called.
    * The example settings for function initialization is showed in this function
    */
   async function initializePryvService () {
     const authSettings = {
-      onStateChange: pryvAuthStateChange, // event Listener for Authentication steps
       authRequest: { // See: https://api.pryv.com/reference/#auth-request
         requestingAppId: 'lib-js-test',
         languageCode: 'fr', // optional (default english)
@@ -149,30 +172,26 @@ export default ({ navigation, route }) => {
         "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
       }
     };
+
     try {
-      let pryvServiceObj = await Pryv.Browser.setupAuth(
+      let loginBtn = new MyLoginButton();
+      setLoginButton(loginBtn);
+      let authService = await Pryv.MobileApp.setupAuth(
         authSettings,
         serviceInfoUrl,
-        serviceInfoJson
+        serviceInfoJson,
+        loginBtn
       );
-      setPryvService(pryvServiceObj);
+      setPryvService(authService);
     } catch (e) {
       console.log('Error:', e);
     }
   };
 
-  /**
-   * Before user starts to log in, we start Auth request
-   */
-  async function startAuthProcess () {
-    await pryvService.startAuthRequest();
-    const loginUrl = pryvService.getAccessData().authUrl;
-    if (loginUrl == null) {
-      checkAuth();
+  const startLogin = () => {
+    if (loginButton != null) {
+      loginButton.onClick();
     }
-    return navigation.navigate('AppWebAuth3', {
-      url: loginUrl
-    });
   }
 
   /**
@@ -182,9 +201,17 @@ export default ({ navigation, route }) => {
     const username = 'jslibtest5';
     const password = username;
     const appId = 'js-lib-test';
+    const originHeader = `https://{username}.pryv.me`;
     try {
-      const userConnection = await pryvService.login(username, password, appId);
-      await setUserInfo(userConnection);
+      const userConnection = await pryvService.login(username, password, appId, originHeader);
+      if (userConnection != null) {
+        console.log('Started user connection');
+        setLoggedIn(true);
+        navigation.navigate('Dashboard', {
+          username: await userConnection.username(),
+          endpoint: userConnection.endpoint
+        })
+      }
     } catch (error) {
       console.log(error, 'error');
     }
@@ -198,43 +225,46 @@ export default ({ navigation, route }) => {
       </Text>
       {loggedIn === false &&
         <>
-        {pryvService == null &&
-          <Text style={styles.title}>Loading service information</Text>
-        }
-        {pryvService != null &&
-          <>
-          <View>
-            <Text style={styles.title}> Log in using app-web-auth3 UI </Text>
-              <Button
-                color="#C63130"
-                onPress={(async () => await startAuthProcess())}
-                title={'Login with app-web-auth3'}
-              />
-            
-          </View>
-          <View style={styles.separator} />
-          <View>
-            <Text style={styles.title}>
-              Login using your own UI screens. All app-web-auth3 logic has to be reimplemented.
+          {pryvService == null &&
+            <Text style={styles.title}>Loading service information</Text>
+          }
+          {pryvService != null &&
+            <>
+              <View>
+                <Text style={styles.title}> Log in using app-web-auth3 UI </Text>
+                <Button
+                  color="#C63130"
+                  onPress={ startLogin }
+                  title={'Login with app-web-auth3'}
+                />
+
+              </View>
+              <View style={styles.separator} />
+              <View>
+                <Text style={styles.title}>
+                  Login using your own UI screens. All app-web-auth3 logic has to be reimplemented.
             </Text>
-            <Button
-              onPress={ simulatePersonalLogin }
-              title={'Simulate personal log in'}
-            />
-          </View>
+                <Button
+                  onPress={simulatePersonalLogin}
+                  title={'Simulate personal log in'}
+                />
+              </View>
+            </>
+          }
         </>
-        }
-      </>
-    }
-    {loggedIn === true &&
+      }
+      {loggedIn === true &&
         <Button
-        onPress={() => navigation.navigate('Dashboard', {
+          onPress={() => navigation.navigate('Dashboard', {
             username: username,
             endpoint: endpoint
-          }) }
-        title={'You are logged in. Go to dashboard'}
+          })}
+          title={'You are logged in. Go to dashboard'}
         />
-    }
+      }
     </View>
   );
 };
+
+
+export default LoginMethodSelection;

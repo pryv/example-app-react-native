@@ -32,6 +32,7 @@ export default function App () {
             component={Dashboard}
             options={{
               title: 'Dashboard',
+              headerLeft: null
             }}
           />
         <Stack.Screen
