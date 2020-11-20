@@ -3,7 +3,6 @@ import styles from '../styles';
 import { Text, Button, View, Alert } from 'react-native';
 const Pryv = require('pryv');
 import * as SecureStore from 'expo-secure-store';
-const Messages = require('./LoginMessages');
 
 const LoginMethodSelection = ({ navigation, route }) => {
   const params = route.params;
@@ -14,7 +13,6 @@ const LoginMethodSelection = ({ navigation, route }) => {
   const [username, setUsername] = useState('');
   const [endpoint, setEndpoint] = useState('');
   const [loginButton, setLoginButton] = useState(null);
-
 
   const startLoginScreen = (loginUrl) => {
     console.log('startLoginScreen');
@@ -39,10 +37,6 @@ const LoginMethodSelection = ({ navigation, route }) => {
      *
      */
     async init () {
-      this.languageCode = this.authSettings.authRequest.languageCode || 'en';
-      // TODO
-      this.messages = Messages(this.languageCode);
-
       // set cookie key for authorization data
       this._cookieKey = 'pryv-libjs-' + this.authSettings.authRequest.requestingAppId;
 
@@ -54,7 +48,7 @@ const LoginMethodSelection = ({ navigation, route }) => {
 
     /**
      * The same button can redirect, open auth popup or logout
-     * this action should implement 
+     * this action should implement
      * this.auth.handleClick();
      */
     onClick () {
@@ -66,22 +60,21 @@ const LoginMethodSelection = ({ navigation, route }) => {
     }
 
     /**
-     * Called each time when the state changes. 
+     * Called each time when the state changes.
      * It will set state to local authState variable
      * Or show error alert when the state is equal to the error
      */
     async onStateChange (state) {
       if (state.status !== authState.status) {
-        console.log('State just changed from:', authState.status, 'to:', state.status);
+        console.log('State just changed to:', state.status);
         setAuthState(state);
 
-        // TODO why id and status has the same value
         switch (state.status) {
           case Pryv.Browser.AuthStates.LOADING:
-            console.log(this.messages.LOADING);
+            console.log(this.auth.messages.LOADING);
             break;
           case Pryv.Browser.AuthStates.INITIALIZED:
-            console.log(this.messages.LOGIN + ': ' + this.serviceInfo.name);
+            console.log(this.auth.messages.LOGIN + ': ' + this.serviceInfo.name);
             break;
           case Pryv.Browser.AuthStates.NEED_SIGNIN:
             startLoginScreen(state.authUrl);
@@ -102,7 +95,7 @@ const LoginMethodSelection = ({ navigation, route }) => {
             navigation.navigate('NotLoggedIn');
             Alert.alert(
               "Error",
-              this.messages.ERROR + ': ' + state.message,
+              this.auth.messages.ERROR + ': ' + state.message,
               [
                 {
                   text: "Cancel",
@@ -119,7 +112,7 @@ const LoginMethodSelection = ({ navigation, route }) => {
     }
 
     async getAuthorizationData () {
-    console.log('getAuthorizationData');
+      console.log('getAuthorizationData');
       const authData = await SecureStore.getItemAsync(this._cookieKey);
       return JSON.parse(authData);
     }
@@ -275,7 +268,7 @@ const LoginMethodSelection = ({ navigation, route }) => {
               <View>
                 <Text style={styles.title}>
                   Login using your own UI screens. All app-web-auth3 logic has to be reimplemented.
-            </Text>
+                </Text>
                 <Button
                   onPress={simulatePersonalLogin}
                   title={'Simulate personal log in'}
