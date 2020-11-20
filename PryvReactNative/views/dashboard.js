@@ -1,7 +1,6 @@
 import React from 'react';
-const styles = require('./styles');
+import styles from './styles';
 import { Text, View, Button } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 
 export default ({ route, navigation }) => {
   const { username, endpoint } = route.params;
@@ -11,9 +10,6 @@ export default ({ route, navigation }) => {
    * And go back to not logged in screen
    */
   async function logout () {
-    if (await SecureStore.isAvailableAsync('api_endpoint')) {
-      await SecureStore.deleteItemAsync('api_endpoint');
-    }
     return navigation.navigate('NotLoggedIn',
       { action: 'logout' }
     );
