@@ -46,92 +46,136 @@ You can check [./PryvReactNative/views/auth/login-method-selection.js](/PryvReac
 1. Import `pryv` library:
 
 ```javascript
-import { Pryv } from 'pryv';
+const Pryv = require('pryv');
 ```
 
-2. Execute `Pryv.Browser.setupAuth()` with correct settings and `state` change listener (it is important that authSettings would NOT have `spanButtonID` setting,
- otherwise, default Pryv login button would be rendered):
+2. Initialize the `Pryv.Service` and custom `MyLoginButton` with the correct settings:
 
 ```javascript
-// called each time the authentication state changed
-function pryvAuthStateChange (state) {
-  console.log('##pryvAuthStateChange', state);
-  if (state !== authState) {
+async function initializePryvService () {
+    console.log('initializePryvService');
+    const authSettings = {
+      authRequest: { // See: https://api.pryv.com/reference/#auth-request
+        requestingAppId: 'lib-js-test',
+        languageCode: 'fr', // optional (default english)
+        requestedPermissions: [
+          {
+            streamId: 'test',
+            defaultName: 'test',
+            level: 'manage'
+          }
+        ],
+        clientData: {
+          'app-web-auth:description': {
+            'type': 'note/txt', 'content': 'This is a consent message.'
+          }
+        },
+        // referer: 'my test with lib-js', // optional string to track registration source
+      }
+    };
+    // To avoid CORS problem in local environment we use json and not the url
+    let serviceInfoUrl = null; // 'https://api.pryv.com/lib-js/demos/service-info.json';
+    let serviceInfoJson = {
+      "register": "https://reg.pryv.me",
+      "access": "https://access.pryv.me/access",
+      "api": "https://{username}.pryv.me/",
+      "name": "Pryv Lab",
+      "home": "https://www.pryv.com",
+      "support": "https://pryv.com/helpdesk",
+      "terms": "https://pryv.com/pryv-lab-terms-of-use/",
+      "eventTypes": "https://api.pryv.com/event-types/flat.json",
+      "assets": {
+        "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
+      }
+    };
+
+    try {
+      let authService = new Pryv.Service(serviceInfoUrl, serviceInfoJson);
+      await authService.info()
+
+      const loginBtn = new MyLoginButton(authSettings, authService);
+      await loginBtn.init();
+
+      setLoginButton(loginBtn);
+      setPryvService(authService);
+    } catch (e) {
+      console.log('Error:', e);
+    }
+  };
+```
+
+3. Inside the `MyLoginButton` class, define the `onStateChange)` method as following:
+
+```javascript
+async onStateChange (state) {
+  if (state.status !== authState.status) {
+    console.log('State just changed to:', state.status);
     setAuthState(state);
-  }
-}
 
-const authSettings = {
-  onStateChange: pryvAuthStateChange, // event Listener for Authentication steps
-  authRequest: { // See: https://api.pryv.com/reference/#auth-request
-    requestingAppId: 'lib-js-test',
-    languageCode: 'fr', // optional (default english)
-    requestedPermissions: [
-      {
-        streamId: 'test',
-        defaultName: 'test',
-        level: 'manage'
-      }
-    ],
-    clientData: {
-      'app-web-auth:description': {
-        'type': 'note/txt', 'content': 'This is a consent message.'
-      }
-    },
-    // referer: 'my test with lib-js', // optional string to track registration source
+    switch (state.status) {
+      case Pryv.Browser.AuthStates.LOADING:
+        console.log(this.auth.messages.LOADING);
+        break;
+      case Pryv.Browser.AuthStates.INITIALIZED:
+        console.log(this.auth.messages.LOGIN + ': ' + this.serviceInfo.name);
+        break;
+      case Pryv.Browser.AuthStates.NEED_SIGNIN:
+        startLoginScreen(state.authUrl);
+        break;
+      case Pryv.Browser.AuthStates.AUTHORIZED:
+        console.log(state.username);
+        this.saveAuthorizationData({
+          apiEndpoint: state.apiEndpoint,
+          username: state.username
+        });
+        break;
+      case Pryv.Browser.AuthStates.SIGNOUT:
+        this.deleteAuthorizationData();
+        this.auth.init();
+        break;
+      case Pryv.Browser.AuthStates.ERROR:
+        console.log('Error', authState.error);
+        navigation.navigate('NotLoggedIn');
+        Alert.alert(
+          "Error",
+          this.auth.messages.ERROR + ': ' + state.message,
+          [
+            {
+              text: "Cancel",
+              style: "cancel"
+            },
+          ],
+          { cancelable: true }
+        );
+        break;
+      default:
+        console.log('WARNING Unhandled state for Login: ' + state.status);
+    }
   }
-};
-// To avoid CORS problem in local environment we use json and not the url
-let serviceInfoUrl = null; // 'https://api.pryv.com/lib-js/demos/service-info.json';
-let serviceInfoJson = {
-  "register": "https://reg.pryv.me",
-  "access": "https://access.pryv.me/access",
-  "api": "https://{username}.pryv.me/",
-  "name": "Pryv Lab",
-  "home": "https://www.pryv.com",
-  "support": "https://pryv.com/helpdesk",
-  "terms": "https://pryv.com/pryv-lab-terms-of-use/",
-  "eventTypes": "https://api.pryv.com/event-types/flat.json",
-  "assets": {
-    "definitions": "https://pryv.github.io/assets-pryv.me/index.json"
-  }
-};
-try {
-  let pryvService = await Pryv.Browser.setupAuth(
-    authSettings,
-    serviceInfoUrl,
-    serviceInfoJson
-  );
-} catch (e) {
-  console.log('Error:', e);
 }
 ```
 
-3. When the user clicks on the login button, the application should start the auth process and redirect to the URL that is received from the [auth request](https://api.pryv.com/reference/#auth-request) as shown in the example below:
+4. When the user clicks on the login button, the application should start the auth process and redirect to the URL that is received from the [auth request](https://api.pryv.com/reference/#auth-request) as shown in the example below:
 
 ```javascript
-async function startAuthProcess () {
-  await pryvService.startAuthRequest();
-  const authUrl = pryvService.getAccessData().authUrl;
-  // open webview with authUrl
+const startLoginScreen = (loginUrl) => {
+  console.log('startLoginScreen');
+  return navigation.navigate('AppWebAuth3', {
+    url: loginUrl
+  });
 }
 ```
 
-[startAuthProcess in react-native example](https://github.com/pryv/lib-js-react-native/blob/dbb45f9192661b198e6b5b86a1c20e387a3a9c7e/PryvReactNative/views/auth/login-method-selection.js#L169).
-
-4. In case of the error or when user don't finish login process, the application should stop the auth process:
+5. When `state.status` is equal to `Pryv.Browser.AuthStates.AUTHORIZED`, you can save the `apiEndpoint` containing the token from the `state` as shown below:
 
 ```javascript
-await pryvService.stopAuthProcess();
-```
-
-5. When `state.id` is equal to `Pryv.Browser.AuthStates.AUTHORIZED`, you can get the `apiEndpoint` containing the token from the `state` as shown below:
-
-```javascript
-if (authState.id == Pryv.Browser.AuthStates.AUTHORIZED) {
-  const { endpoint, token } = pryvService.extractTokenAndApiEndpoint(authState.apiEndpoint);
-  // username = authState.displayName
-}
+case Pryv.Browser.AuthStates.AUTHORIZED:
+  console.log(state.username);
+  this.saveAuthorizationData({
+    apiEndpoint: state.apiEndpoint,
+    username: state.username
+  });
+	break;
 ```
 
 ### Personal login
