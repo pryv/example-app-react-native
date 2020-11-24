@@ -6860,7 +6860,7 @@ proxy-addr@~2.0.5:
     forwarded "~0.1.2"
     ipaddr.js "1.9.1"
 
-pryv@^2.1.10:
+pryv@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/pryv/-/pryv-2.1.1.tgz#b5b82e636ab8d524cdedef5cef917fe0321f85ae"
   integrity sha512-jaHvezP02lVkeEW4yFMuqoweRNN6L7CDyV8gZ8iSZhQbT8zkgQcF5Kmy5e6U0xrAO8WV5ArbkrDy/jRXA2+yAA==
