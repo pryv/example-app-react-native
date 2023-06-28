@@ -27,7 +27,7 @@
     "react-native-screens": "^2.11.0",
     "react-native-unimodules": "~0.11.0",
     "react-native-web": "~0.13.12",
-    "react-native-webview": "^10.9.2",
+    "react-native-webview": "^11.0.0",
     "rec-la": "pryv/rec-la"
   },
   "devDependencies": {
